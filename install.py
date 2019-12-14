@@ -132,10 +132,14 @@ def download_asset(asset, dir):
       leave=False, miniters=1,
       unit='B', unit_scale=True
     ) as pbar:
-      for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
-        if chunk:
-          f.write(chunk)
-          pbar.update(CHUNK_SIZE)
+      try:
+        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+          if chunk:
+            f.write(chunk)
+            pbar.update(CHUNK_SIZE)
+      except KeyboardInterrupt:
+        print("\x1B[A\x1B[2K", end='')
+        raise KeyboardInterrupt
   print_(OK)
 
 
@@ -213,4 +217,8 @@ if __name__ == "__main__":
     print_usage()
     exit(1)
 
-  main()
+  try:
+    main()
+  except KeyboardInterrupt:
+    print_(FAIL)
+    print_(INFO, "Interrupted.")
