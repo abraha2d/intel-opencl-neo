@@ -24,7 +24,7 @@ import tqdm
 
 GITHUB_REPO = "intel/compute-runtime"
 
-CHUNK_SIZE = 131072
+CHUNK_SIZE = 8192
 
 DEBUG = True
 
@@ -136,16 +136,17 @@ def download_asset(asset, dir):
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
           if chunk:
             f.write(chunk)
-            pbar.update(CHUNK_SIZE)
+            f.flush()
+            pbar.update(len(chunk))
       except KeyboardInterrupt:
         print("\x1B[A\x1B[2K", end='')
         raise KeyboardInterrupt
   print_(OK)
 
 
-def download_assets(release_page):
+def download_assets(page):
   """
-  Downloads assets from the given release page into a temporary directory.
+  Downloads assets from the given page into a temporary directory.
   """
   print_(EMPTY, "Compiling list of assets to download...")
   try:
@@ -156,7 +157,7 @@ def download_assets(release_page):
     exit(1)
   asset_list = [
     "https://github.com" + e.get('href')
-    for e in lxml.html.fromstring(release_page).xpath(expression)]
+    for e in lxml.html.fromstring(page).xpath(expression)]
   print_(OK)
 
   tmp_dir = tempfile.mkdtemp(prefix='intel-opencl-neo-')
@@ -164,6 +165,24 @@ def download_assets(release_page):
 
   for asset in asset_list:
     download_asset(asset, tmp_dir)
+
+
+def verify_assets(dir):
+  """
+  Verifies integrity of assets in the specified directory.
+  """
+  print_(EMPTY, "Verifying assets...")
+  print_(WARN, replace=True)
+  print_(INFO, "Not implemented yet.")
+
+
+def install_assets(dir):
+  """
+  Installs assets from the specified directory.
+  """
+  print_(EMPTY, "Installing assets...")
+  print_(WARN, replace=True)
+  print_(INFO, "Not implemented yet.")
 
 
 def print_usage():
@@ -196,6 +215,8 @@ Options:
 def main():
   page = get_release_page(sys.argv[1] if len(sys.argv) > 1 else "latest")
   dir = download_assets(page)
+  verify_assets(dir)
+  install_assets(dir)
 
 
 if __name__ == "__main__":
