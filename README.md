@@ -1,2 +1,3 @@
-# intel-opencl-neo
-Installs the latest version of Intel(R) Graphics Compute Runtime for OpenCL(TM) from https://github.com/intel/compute-runtime
+An installer for the Intel(R) Graphics Compute Runtime for OpenCL(TM).
+
+Installs the requested version from https://github.com/intel/compute-runtime.

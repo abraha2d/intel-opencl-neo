@@ -2,7 +2,7 @@
 
 """
 An installer for the Intel(R) Graphics Compute Runtime for OpenCL(TM).
-Installs the requested version from https://github.com/intel/compute-runtime.
+Installs the requested version from the configured repository.
 """
 
 VERSION = "0.1.0"
@@ -18,7 +18,8 @@ import sys
 # Configuration
 #
 
-RELEASE_URL = "https://github.com/intel/compute-runtime/releases/{}"
+GITHUB_REPO = "https://github.com/intel/compute-runtime"
+RELEASE_URL = f"{GITHUB_REPO}/releases/" + "{}"
 
 
 #-----------
@@ -105,6 +106,7 @@ def print_usage():
   """
 
   print(f"""{__doc__}
+Configured repository: {GITHUB_REPO}
 
 Usage:
   {basename(sys.argv[0])} [<release>]
