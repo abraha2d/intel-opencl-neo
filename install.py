@@ -13,6 +13,7 @@ import curses
 import lxml.html
 import os
 import requests
+import subprocess
 import sys
 import tempfile
 import tqdm
@@ -92,7 +93,7 @@ def get_release_page(version="latest"):
     else:
       print_(EMPTY, f"Getting details for release {version}...")
       r = requests.get(RELEASE_URL.format(f"tag/{version}"))
-  except requests.exceptions.ConnectionError as e:
+  except requests.exceptions.RequestException as e:
     print_(FAIL)
     try:
       e = e.args[0]
@@ -125,22 +126,50 @@ def download_asset(asset, dir):
   """
   asset_basename = os.path.basename(asset)
   print_(EMPTY, f"Downloading asset: {asset_basename}")
-  r = requests.get(asset, stream=True)
-  with open(os.path.join(dir, asset_basename), 'wb') as f:
-    with tqdm.tqdm(
-      total=int(r.headers['Content-Length']),
-      leave=False, miniters=1,
-      unit='B', unit_scale=True
-    ) as pbar:
-      try:
-        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
-          if chunk:
-            f.write(chunk)
-            f.flush()
-            pbar.update(len(chunk))
-      except KeyboardInterrupt:
-        print("\x1B[A\x1B[2K", end='')
-        raise KeyboardInterrupt
+  try:
+    r = requests.get(asset, stream=True)
+    if not r:
+      print_(FAIL)
+      if r.status_code == 404:
+        print_(INFO, "Asset not found.")
+      else:
+        print_(INFO, f"Status code: {r.status_code}")
+      exit(1)
+    with open(os.path.join(dir, asset_basename), 'wb') as f:
+      with tqdm.tqdm(
+        total=int(r.headers['Content-Length']),
+        leave=False, miniters=1,
+        unit='B', unit_scale=True
+      ) as pbar:
+        try:
+          for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+            if chunk:
+              f.write(chunk)
+              f.flush()
+              pbar.update(len(chunk))
+        except KeyboardInterrupt as e:
+          print("\x1B[A\x1B[2K", end='')
+          raise e
+  except requests.exceptions.ChunkedEncodingError as e:
+    print_(FAIL)
+    try:
+      e = e.args[-1]
+      e = e.args[-1]
+      e = str(e)
+    finally:
+      print_(INFO, f"Encountered {e}.")
+    exit(1)
+  except requests.exceptions.ConnectionError as e:
+    print_(FAIL)
+    try:
+      e = e.args[0]
+      e = e.reason
+      e = e.args[0]
+      e = e.split(": ")[-1]
+    finally:
+      print_(INFO, f"Encountered {e}.")
+    exit(1)
+
   print_(OK)
 
 
@@ -166,14 +195,49 @@ def download_assets(page):
   for asset in asset_list:
     download_asset(asset, tmp_dir)
 
+  return tmp_dir
+
+
+def run_command(cmd, dir):
+  process = subprocess.Popen(
+    cmd,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    shell=True,
+    cwd=dir,
+    universal_newlines=True,
+    bufsize=1,
+  )
+
+  i = 0
+
+  try:
+    for line in iter(process.stdout.readline, ''):
+      i += 1
+      print(line, end='')
+      sys.stdout.flush()
+    process.wait()
+    failure = process.returncode
+  except KeyboardInterrupt as e:
+    print("\x1B[A"*i, end='')
+    print_(FAIL)
+    print("\x1B[B"*i, end='')
+    print_(INFO, "Interrupted.")
+    exit(2)
+
+  print("\x1B[A"*i, end='')
+  print_(FAIL if failure else OK)
+  print("\x1B[B"*i, end='')
+  if failure:
+    exit(1)
+
 
 def verify_assets(dir):
   """
   Verifies integrity of assets in the specified directory.
   """
   print_(EMPTY, "Verifying assets...")
-  print_(WARN, replace=True)
-  print_(INFO, "Not implemented yet.")
+  run_command("sha256sum -c *.sum", dir)
 
 
 def install_assets(dir):
@@ -181,8 +245,7 @@ def install_assets(dir):
   Installs assets from the specified directory.
   """
   print_(EMPTY, "Installing assets...")
-  print_(WARN, replace=True)
-  print_(INFO, "Not implemented yet.")
+  run_command("sudo dpkg -i *.deb", dir)
 
 
 def print_usage():
@@ -217,6 +280,7 @@ def main():
   dir = download_assets(page)
   verify_assets(dir)
   install_assets(dir)
+  print_(OK, "All done.", replace=False)
 
 
 if __name__ == "__main__":
@@ -243,3 +307,4 @@ if __name__ == "__main__":
   except KeyboardInterrupt:
     print_(FAIL)
     print_(INFO, "Interrupted.")
+    exit(2)
