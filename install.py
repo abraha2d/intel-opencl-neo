@@ -5,7 +5,7 @@ An installer for the Intel(R) Graphics Compute Runtime for OpenCL(TM).
 Installs the requested version from the configured repository.
 """
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 
 import cssselect
@@ -23,7 +23,8 @@ import tqdm
 # Configuration
 #
 
-GITHUB_REPO = "intel/compute-runtime"
+GH_REPO_RUNTIME = "intel/compute-runtime"
+GH_REPO_COMPILER = "intel/intel-graphics-compiler"
 
 CHUNK_SIZE = 8192
 
@@ -34,7 +35,7 @@ DEBUG = True
 # Advanced Configuration
 #
 
-RELEASE_URL = f"https://github.com/{GITHUB_REPO}/releases/" + "{}"
+RELEASE_URL = "https://github.com/{}/releases/{}"
 
 ASSET_SELECTOR = ".Box > div > .d-flex > a"
 
@@ -82,17 +83,17 @@ def print_(type, *args, **kwargs):
 # Functions
 #
 
-def get_release_page(version="latest"):
+def get_release_page(repo, version="latest"):
   """
   Retrieves the HTML page corresponding to the requested version.
   """
   try:
     if version == "latest":
       print_(EMPTY, "Getting latest release details...")
-      r = requests.get(RELEASE_URL.format(version))
+      r = requests.get(RELEASE_URL.format(repo, version))
     else:
       print_(EMPTY, f"Getting details for release {version}...")
-      r = requests.get(RELEASE_URL.format(f"tag/{version}"))
+      r = requests.get(RELEASE_URL.format(repo, f"tag/{version}"))
   except requests.exceptions.RequestException as e:
     print_(FAIL)
     try:
@@ -173,7 +174,7 @@ def download_asset(asset, dir):
   print_(OK)
 
 
-def download_assets(page):
+def download_assets(page, dir=None):
   """
   Downloads assets from the given page into a temporary directory.
   """
@@ -189,8 +190,9 @@ def download_assets(page):
     for e in lxml.html.fromstring(page).xpath(expression)]
   print_(OK)
 
-  tmp_dir = tempfile.mkdtemp(prefix='intel-opencl-neo-')
-  print_(DBUG, f"Temporary directory: {tmp_dir}")
+  tmp_dir = dir or tempfile.mkdtemp(prefix='intel-opencl-neo-')
+  if dir is None:
+    print_(DBUG, f"Temporary directory: {tmp_dir}")
 
   for asset in asset_list:
     download_asset(asset, tmp_dir)
@@ -259,11 +261,12 @@ def print_usage():
 Configured repository: {GITHUB_REPO}
 
 Usage:
-  {basename} [<release>]
+  {basename}
+  {basename} <runtime version> <compiler version>
   {basename} -h | --help
   {basename} --version
 
-If <release> is not specified, the latest release will be installed.
+If <runtime version> and <compiler version> are not specified, the latest versions will be installed.
 
 Options:
   -h --help     Show this screen.
@@ -276,10 +279,15 @@ Options:
 #
 
 def main():
-  page = get_release_page(sys.argv[1] if len(sys.argv) > 1 else "latest")
-  dir = download_assets(page)
+  rPage = get_release_page(GH_REPO_RUNTIME, sys.argv[1] if len(sys.argv) > 2 else "latest")
+  dir = download_assets(rPage)
+
+  cPage = get_release_page(GH_REPO_COMPILER, sys.argv[2] if len(sys.argv) > 2 else "latest")
+  download_assets(cPage, dir)
+
   verify_assets(dir)
   install_assets(dir)
+
   print_(OK, "All done.", replace=False)
 
 
