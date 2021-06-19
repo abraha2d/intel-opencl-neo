@@ -5,7 +5,7 @@ An installer for the Intel(R) Graphics Compute Runtime for OpenCL(TM).
 Installs the requested version from the configured repository.
 """
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 
 import cssselect
@@ -258,7 +258,9 @@ def print_usage():
   basename = os.path.basename(sys.argv[0])
 
   print(f"""{__doc__}
-Configured repository: {GITHUB_REPO}
+Configured repositories:
+- {GH_REPO_RUNTIME}
+- {GH_REPO_COMPILER}
 
 Usage:
   {basename}
@@ -296,17 +298,23 @@ if __name__ == "__main__":
     print_usage()
     exit(0)
 
-  if len(sys.argv) > 2:
-    print_(FAIL, "Too many arguments.", replace=False)
-    print_usage()
-    exit(1)
-
   if "-v" in sys.argv or "--version" in sys.argv:
     print(f"{os.path.basename(sys.argv[0])} v{VERSION}")
     exit(0)
 
-  if len(sys.argv) > 1 and sys.argv[1][0] == "-":
-    print_(FAIL, f"Unknown option \"{sys.argv[1]}\"", replace=False)
+  for arg in sys.argv:
+    if arg[0] == "-":
+      print_(FAIL, f"Unknown option \"{arg}\"", replace=False)
+      print_usage()
+      exit(1)
+
+  if len(sys.argv) > 1 and len(sys.argv) < 3:
+    print_(FAIL, "Not enough arguments.", replace=False)
+    print_usage()
+    exit(1)
+
+  if len(sys.argv) > 3:
+    print_(FAIL, "Too many arguments.", replace=False)
     print_usage()
     exit(1)
 
