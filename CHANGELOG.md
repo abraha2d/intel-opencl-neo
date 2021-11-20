@@ -12,6 +12,7 @@ Also, GitHub's release page format has changed slightly.
 - Updated installer to allow for de-configuration of `intel-opencl`.
 - Updated scraper to parse GitHub's new release page format.
 - Added `bootstrap.sh` to set up a virtual environment with the necessary dependencies.
+- Added this CHANGELOG file.
 
 
 ## v0.2.1 (2021-06-19)
