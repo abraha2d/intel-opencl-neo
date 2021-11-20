@@ -14,6 +14,12 @@ Also, GitHub's release page format has changed slightly.
 - Added `bootstrap.sh` to set up a virtual environment with the necessary dependencies.
 
 
+## v0.2.1 (2021-06-19)
+
+### Changes
+- Fixed bugs in argument handling.
+
+
 ## v0.2.0 (2020-12-17)
 
 Intel Compute Runtime and Intel Graphics Compiler are released in separate repos since ICR 20.37.17906 / IGC 1.0.4944.
