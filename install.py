@@ -32,8 +32,9 @@ DEBUG = True
 #
 
 RELEASE_URL = "https://github.com/{}/releases/{}"
+ASSETS_URL = "https://github.com/{}/releases/expanded_assets/{}"
 
-ASSET_SELECTOR = "li.Box-row > a"
+ASSET_SELECTOR = "li.Box-row > div > a"
 
 
 # -----------
@@ -117,7 +118,7 @@ def get_release_page(repo, version="latest"):
             r = requests.get(RELEASE_URL.format(repo, version))
         else:
             print_(EMPTY, f"Getting details for release {version}...")
-            r = requests.get(RELEASE_URL.format(repo, f"tag/{version}"))
+            r = requests.get(ASSETS_URL.format(repo, version))
     except requests.exceptions.RequestException as e:
         handle_connection_error(e)
         return
@@ -127,6 +128,7 @@ def get_release_page(repo, version="latest"):
         if version == "latest":
             latest_version = r.url.split('/')[-1]
             print_(INFO, f"Latest release: {latest_version}")
+            return get_release_page(repo, latest_version)
     else:
         print_(FAIL)
         if r.status_code == 404:

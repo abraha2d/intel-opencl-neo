@@ -1,6 +1,14 @@
 # Changelog
 
 
+## v0.4.0 (2022-10-17)
+
+GitHub's release page format has changed slightly, again.
+
+### Changes
+- Updated scraper to parse GitHub's new release page format.
+
+
 ## v0.3.0 (2021-11-20)
 
 `intel-opencl` has been replaced by `intel-opencl-icd` since ICR 21.42.21270.
